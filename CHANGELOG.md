@@ -9,7 +9,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Clause 14.5 and 20.2 (**new rule**): a publisher connection without an `Origin` header is
   accepted only from a loopback address unless the user allowed that address; the origin `null`
-  is always refused; the publishing endpoint should listen on loopback by default.
+  is always refused; the publishing endpoint should listen on loopback by default, and should
+  require pairing when it listens beyond loopback.
 - Clauses 7.3, 8.1 and 14 (clarified, found while building the Rust relay): a relay refuses with
   `error` / `not_allowed` and close code 4003 instead of `hello`, and a publisher must accept that;
   a publisher must send its full state after a valid `publish`; version and pairing failures close

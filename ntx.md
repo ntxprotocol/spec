@@ -478,6 +478,8 @@ and closing it with close code 4003 (clause 12).
   publishers from that address.
 
 The publishing endpoint SHOULD listen only on loopback addresses unless the user chooses otherwise.
+A relay that listens on other addresses SHOULD require pairing (clause 13), because any computer
+on the network can send any `Origin` header.
 The relay's publishing feature MUST be off until the user turns it on.
 
 ## 15 Message types and type descriptors
