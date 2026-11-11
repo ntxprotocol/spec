@@ -161,8 +161,10 @@ that misses messages is always corrected by the next one.
 connects as a WebSocket client.
 
 5.2 The WebSocket subprotocol name is `ntx`. A receiver SHOULD offer it in the
-`Sec-WebSocket-Protocol` header; a source MUST accept connections that offer it and SHOULD accept
-connections that offer no subprotocol (for simple tools).
+`Sec-WebSocket-Protocol` header; a source MUST accept connections that offer it, and MUST then
+include `ntx` in the `Sec-WebSocket-Protocol` header of its response (WebSocket clients reject a
+server that drops a subprotocol they offered). A source SHOULD accept connections that offer no
+subprotocol (for simple tools).
 
 5.3 Every NTX message is one JSON object (RFC 8259) sent as one WebSocket **text** frame (or one
 fragmented text message). Binary frames MUST NOT be sent; a receiving endpoint MUST ignore them.
@@ -306,7 +308,9 @@ close the connection (clause 12).
 9.2 **State on connect.** Immediately after a valid `subscribe` (and after `announce`, if sent),
 the source MUST send one `update` for each subscribed channel that it has, carrying that channel's
 current item. If nothing has been sent on a channel yet, the item is `"type": "ntx.text"` with
-`"fields": {}`.
+`"fields": {}`. These state updates carry the `seq` of the item's last change (`0` if the channel
+was never set), so they are the only case where a source repeats a `seq` it has already used; a
+receiver that already applied that `seq` correctly ignores the repeat.
 
 9.3 **Changes.** Whenever the item of a channel changes, the source MUST send an `update` for that
 channel to every receiver subscribed to it. Each `update` replaces the previous item completely.
