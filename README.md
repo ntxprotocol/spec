@@ -1,4 +1,18 @@
+<!-- markdownlint-disable-file MD041 -- the logo comes before the title -->
+<!-- markdownlint-disable MD033 -->
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/ntx-wordmark-reverse.svg">
+    <img src="assets/ntx-wordmark.svg" alt="NTX" height="56">
+  </picture>
+</p>
+<!-- markdownlint-enable MD033 -->
+
 # NTX — Network Text Exchange
+
+[![validate](https://github.com/ntxprotocol/spec/actions/workflows/validate.yml/badge.svg)](https://github.com/ntxprotocol/spec/actions/workflows/validate.yml)
+[![Spec: 0.1 Pre-Draft](https://img.shields.io/badge/spec-0.1%20pre--draft-0B7A72)](ntx.md)
+[![Licence: Community Specification 1.0](https://img.shields.io/badge/licence-CSL%201.0-0B7A72)](LICENSE.md)
 
 **An open protocol for sending text, not video, between apps on a local network.**
 
@@ -49,3 +63,6 @@ royalty-free patent commitment from contributors. Code in this repository is MIT
 and examples are CC0. See [LICENSE.md](LICENSE.md).
 
 Copyright © 2026 CamelCase Technologies Ltd and the NTX contributors.
+
+The NTX name and wordmark (`assets/`) are trademarks and are not covered by these licences; see the
+[NTX trademark policy](https://github.com/ntxprotocol/.github/blob/main/TRADEMARKS.md).
