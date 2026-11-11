@@ -190,8 +190,9 @@ always carries the real port.
 
 6.2 The service instance name SHOULD be the source's display name (clause 8.2), for example
 `CHURCH-PC (Cueword)`. A DNS label holds at most 63 bytes of UTF-8 (RFC 6763, section 4.1.1), so
-a longer name MUST be shortened to 63 bytes without splitting a character. The full name is
-still sent in `hello`.
+a longer name MUST be shortened to at most 63 bytes at a Unicode scalar value boundary, and SHOULD
+NOT split a grapheme cluster (a letter and its combining marks, as in Yorùbá). The full name is
+still sent in `hello`, where `source.name` is limited to 256 characters (clause 18.4).
 
 6.3 The TXT record MUST contain these keys:
 
@@ -241,7 +242,9 @@ not know. This keeps old implementations working when new optional features are 
 | `pong` | any | Heartbeat answer |
 | `error` | any | Something went wrong |
 
-Each operation has a JSON Schema in `schemas/`.
+Each operation has a JSON Schema in `schemas/`. The schemas are normative. A message that does not
+match its schema is invalid (`bad_message`, clause 12). Clause 18.4 lists the length limits the
+schemas set.
 
 ## 8 Connection handshake
 
@@ -284,15 +287,23 @@ Each operation has a JSON Schema in `schemas/`.
 - `receiver.id` and `receiver.name` follow the same rules as for sources. They let monitoring tools
   show who is connected.
 - `channels` (OPTIONAL): which channels to receive. Default `["program"]`. A source MUST ignore
-  names it does not have.
+  names it does not have. A receiver SHOULD ask only for channels listed in `hello`, and for at
+  least one, because the source sends nothing for the others.
 - `pairing` (REQUIRED only if the source asked for it): see clause 13.
+
+The first `update` (9.2) confirms the subscription; a receiver SHOULD NOT report itself connected
+before it.
+
+A receiver that has no pairing code MAY close the connection with close code 4003 instead of
+sending `subscribe`.
 
 8.4 If the versions are incompatible (clause 19), or pairing fails, the source MUST send `error` and
 close the connection (clause 12).
 
 8.5 A source MUST NOT send `announce` or `update` before it has received a valid `subscribe`.
 
-8.6 If a receiver does not send `subscribe` within 10 seconds, the source MAY close the connection.
+8.6 If a receiver does not send `subscribe` within 10 seconds, the source MAY close the connection
+with close code 4008 (clause 12.5).
 
 ## 9 State delivery
 
@@ -310,10 +321,10 @@ close the connection (clause 12).
 
 9.2 **State on connect.** Immediately after a valid `subscribe` (and after `announce`, if sent),
 the source MUST send one `update` for each subscribed channel that it has, carrying that channel's
-current item. If nothing has been sent on a channel yet, the item is `"type": "ntx.text"` with
-`"fields": {}`. These state updates carry the `seq` of the item's last change (`0` if the channel
-was never set), so they are the only case where a source repeats a `seq` it has already used; a
-receiver that already applied that `seq` correctly ignores the repeat.
+current item, with the `seq` of that item's last change. A channel that has not been set since
+the session began (clause 9.4) is sent as `"type": "ntx.text"`, `"fields": {}` and `"seq": 0`.
+State updates are the only case where a source repeats a `seq` it has already used; a receiver
+that already applied that `seq` correctly ignores the repeat.
 
 9.3 **Changes.** Whenever the item of a channel changes, the source MUST send an `update` for that
 channel to every receiver subscribed to it. Each `update` replaces the previous item completely.
@@ -325,7 +336,8 @@ applied for that channel in the same session. When the `session` value changes (
 restarted), the receiver MUST forget previous `seq` values.
 
 9.5 **Clearing.** To clear a channel, a source sends an `update` whose `fields` is an empty object.
-Receivers MUST then show every element bound to that channel as empty (clause 16).
+Receivers MUST then show every element bound to that channel as empty, including the fixed text
+of a pattern (clause 16.5).
 
 9.6 The `type` MAY change from one update to the next (for example from scripture to lyrics).
 
@@ -361,12 +373,17 @@ regardless of tally.
 
 Heartbeats are application messages because web browsers cannot send WebSocket ping frames.
 
-11.2 A source SHOULD send `ping` when it has sent nothing for 5 seconds. Either side SHOULD close the
-connection if it has received nothing for 15 seconds.
+11.2 Each endpoint SHOULD send `ping` when it has received nothing for 5 seconds. An endpoint that
+has received nothing for 15 seconds SHOULD close the connection with close code 4008
+(clause 12.5).
 
 11.3 When a connection is lost, a receiver SHOULD reconnect automatically, waiting 1 second before
 the first attempt and doubling the wait up to a maximum of 10 seconds. It SHOULD keep showing the
-last text it received until the connection is back or the user changes it.
+last text it received until the connection is back or the user changes it. A receiver's wait goes
+back to 1 second only after it has received an `update`.
+
+After `unsupported_version`, `pairing_required`, `pairing_failed` or `not_allowed`, an endpoint
+SHOULD NOT reconnect until the user changes its settings or asks it to try again.
 
 11.4 If the source's address has changed, a receiver SHOULD find it again through discovery by its
 `source.id`.
@@ -394,6 +411,16 @@ last text it received until the connection is back or the user changes it.
 
 12.4 An endpoint that receives an unknown `code` MUST treat it as `bad_message`.
 
+12.5 Some closes have no `error` before them:
+
+| Close code | When |
+| --- | --- |
+| 4008 | Timeout: no `subscribe` within 10 seconds (8.6), or nothing received for 15 seconds (11.2) |
+| 4003 | A receiver that has no pairing code gives up instead of sending `subscribe` (8.3) |
+
+Close codes 4000–4999 are used throughout because a web browser can close a WebSocket only with
+1000 or 3000–4999.
+
 ## 13 Pairing
 
 13.1 A source MAY require a pairing code: a short secret (RECOMMENDED: 6 digits) that the user
@@ -409,11 +436,14 @@ least 16 characters for every connection.
 "pairing": { "proof": "<base64 of HMAC-SHA256(key = pairing code, message = nonce)>" }
 ```
 
-The pairing code and the nonce are encoded as UTF-8. The proof is standard Base64 (RFC 4648,
-section 4) with padding.
+The pairing code is normalised to NFC, then encoded as UTF-8. Pairing codes SHOULD use only ASCII
+digits. The nonce is encoded as UTF-8. The proof is standard Base64 (RFC 4648, section 4) with
+padding: 44 characters.
 
-13.4 The source MUST compare the proof in constant time. If it is missing it MUST reply
-`pairing_required`; if it is wrong, `pairing_failed`. A source SHOULD slow down repeated failures
+13.4 The source MUST compare the proof in constant time. If `pairing` or its `proof` is missing it
+MUST reply `pairing_required`; if the proof is wrong, `pairing_failed`. A proof that is not
+44 characters of padded Base64 is wrong: `pairing_failed`, not `bad_message`. A source that does
+not require pairing ignores `pairing`. A source SHOULD slow down repeated failures
 from the same address (for example by waiting 1 second before replying).
 
 13.5 Receivers SHOULD remember a working pairing code per `source.id`.
@@ -554,20 +584,38 @@ index. Examples: `text`, `reference`, `verses.0.text`. Member names containing `
 addressed; type authors SHOULD use names made of letters, digits and `_`.
 
 16.3 **Patterns** mix fixed text and field paths in braces:
-`{reference} · {version}`. `{{` and `}}` produce literal `{` and `}`.
+`{reference} · {version}`. `{{` and `}}` produce literal `{` and `}`. Spaces (U+0020) and tabs
+(U+0009) at the start and end of a field path inside braces are ignored, so `{ reference }` is
+`{reference}`. Nothing else is trimmed.
 
 16.4 **Converting values to text.**
 
 | Value | Text |
 | --- | --- |
 | string | as is |
-| number | its JSON text (`3`, `2.5`) |
+| number | the shortest decimal form that converts back to the same IEEE 754 double, as ECMAScript `Number.prototype.toString` produces it (see below) |
 | `true` / `false` | `true` / `false` |
 | `null`, or path not found | empty text |
 | array | each element converted by these rules, joined with a line break (`\n`) |
 | object | empty text |
 
-16.5 When the channel is cleared (`fields` is `{}`), every bound element shows empty text.
+Numbers, as JSON in `fields` and as text:
+
+| JSON | Text |
+| --- | --- |
+| `3`, `3.0` | `3` |
+| `2.5` | `2.5` |
+| `-0` | `0` |
+| `0.1` | `0.1` |
+| `1e21` | `1e+21` |
+| `1e-7` | `1e-7` |
+| `123456789012345678901` | `123456789012345680000` |
+
+A double holds every integer exactly only up to 2^53 − 1 (9007199254740991), so larger integers
+lose digits, as the last row shows. Sources SHOULD send integers above 2^53 − 1 as strings.
+
+16.5 When the channel is cleared (`fields` is `{}`), every bound element shows empty text,
+including the fixed text of a pattern.
 
 16.6 A receiver SHOULD otherwise treat bound text exactly like text the user typed: the element
 keeps its template, font, size, auto-sizing and transitions.
@@ -597,6 +645,23 @@ larger message MUST reply `too_large` and close the connection.
 
 18.3 A source SHOULD NOT send more than 30 updates per second per channel. Receivers MAY skip
 intermediate updates and show only the newest one.
+
+18.4 The schemas (clause 7.3) also set these limits. Lengths count Unicode code points.
+
+| Member | Limit |
+| --- | --- |
+| `source.id`, `receiver.id` | 1 to 128 characters |
+| `source.name`, `receiver.name` | 1 to 256 characters |
+| `session` | 1 to 128 characters |
+| a channel name | 1 to 64 characters |
+| `type`, `ntxType` | at most 256 characters |
+| `pairing.nonce` | 16 to 256 characters |
+| `pairing.proof` | a string; its format (44 characters of padded Base64) is checked by clause 13.4, not by the schema |
+| `seq` | 0 to 2^53 − 1 |
+| `id` of `ping` and `pong` | at most 64 characters |
+| `code` of `error` | 1 to 64 characters |
+| `message` of `error` | at most 1024 characters |
+| type descriptor `title`, `description` | at most 256 and 4096 characters |
 
 ## 19 Versioning
 

@@ -13,9 +13,9 @@
   },
   "$defs": {
     "pairingProof": {
+      "description": "A missing proof is answered with pairing_required, and a proof that is not 44 characters of padded Base64 with pairing_failed (clause 13.4), so the schema does not check them.",
       "type": "object",
-      "required": ["proof"],
-      "properties": { "proof": { "type": "string", "pattern": "^[A-Za-z0-9+/]{43}=$" } }
+      "properties": { "proof": { "type": "string" } }
     }
   }
 }

@@ -7,6 +7,31 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+Found by an interoperability review of the Rust core, the TypeScript SDK, the Python bindings and
+the conformance suite:
+
+- Clause 7.3 (**new rule**): the JSON Schemas are normative; a message that does not match its
+  schema is `bad_message`. New clause 18.4 lists the limits the schemas set.
+- Clause 11.2 (**changed**): each endpoint pings when it has *received* nothing for 5 seconds,
+  and closes with 4008 after 15 seconds of silence.
+- Clauses 8.6, 11.2 and new 12.5: timeouts close with 4008. Browsers cannot send 1001 or 1008.
+- Clause 11.3 (**new rule**): no automatic reconnect after `unsupported_version`,
+  `pairing_required`, `pairing_failed` or `not_allowed`; the back-off resets only after an
+  `update`.
+- Clause 8.3: the first `update` confirms a subscription; a receiver without a pairing code may
+  close with 4003; receivers should ask only for channels listed in `hello`.
+- Clause 9.2: a channel not set since the session began is sent as `ntx.text`, `{}`, `seq` 0.
+- Clauses 9.5 and 16.5: a cleared channel also hides the fixed text of a pattern.
+- Clause 16.3: spaces and tabs around a field path inside braces are ignored.
+- Clause 16.4 (**changed**): numbers become text as ECMAScript `Number.prototype.toString` gives
+  them (`3.0` → `3`); integers above 2^53 − 1 should be sent as strings.
+- Clause 13.3: the pairing code is normalised to NFC before UTF-8; codes should be ASCII digits.
+- Clause 13.4 and `subscribe.schema.json`: a missing proof is `pairing_required` and a malformed
+  proof is `pairing_failed`; the schema no longer checks the proof, so it no longer turns these
+  into `bad_message`.
+- Clause 6.2: instance names are cut at a Unicode scalar value boundary and should not split a
+  grapheme cluster; `source.name` in `hello` is at most 256 characters.
+- New examples for these rules.
 - Clause 14.5 and 20.2 (**new rule**): a publisher connection without an `Origin` header is
   accepted only from a loopback address unless the user allowed that address; the origin `null`
   is always refused; the publishing endpoint should listen on loopback by default, and should
