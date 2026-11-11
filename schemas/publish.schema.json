@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spec.ntxprotocol.com/schemas/0.1/publish.schema.json",
+  "title": "publish (publisher to relay)",
+  "type": "object",
+  "required": ["op", "ntx", "source"],
+  "properties": {
+    "op": { "const": "publish" },
+    "ntx": { "$ref": "defs.schema.json#/$defs/version" },
+    "source": { "$ref": "defs.schema.json#/$defs/endpoint" },
+    "channels": {
+      "allOf": [{ "$ref": "defs.schema.json#/$defs/channels" }, { "type": "array", "contains": { "const": "program" } }]
+    },
+    "pairing": { "$ref": "subscribe.schema.json#/$defs/pairingProof" }
+  }
+}

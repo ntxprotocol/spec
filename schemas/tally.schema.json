@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spec.ntxprotocol.com/schemas/0.1/tally.schema.json",
+  "title": "tally (receiver to source, relay to publisher)",
+  "type": "object",
+  "required": ["op", "program", "preview"],
+  "properties": {
+    "op": { "const": "tally" },
+    "program": { "type": "boolean" },
+    "preview": { "type": "boolean" }
+  }
+}

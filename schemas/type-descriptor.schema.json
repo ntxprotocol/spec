@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spec.ntxprotocol.com/schemas/0.1/type-descriptor.schema.json",
+  "title": "NTX type descriptor",
+  "description": "Describes the fields of an NTX message type (clause 15.4). The schema member is a JSON Schema limited to a small subset of keywords.",
+  "type": "object",
+  "required": ["ntxType", "schema"],
+  "properties": {
+    "ntxType": { "$ref": "defs.schema.json#/$defs/typeName" },
+    "title": { "type": "string", "maxLength": 256 },
+    "description": { "type": "string", "maxLength": 4096 },
+    "schema": {
+      "allOf": [
+        { "$ref": "#/$defs/fieldSchema" },
+        { "type": "object", "properties": { "type": { "const": "object" } }, "required": ["type"] }
+      ]
+    }
+  },
+  "$defs": {
+    "fieldSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": { "enum": ["object", "array", "string", "number", "integer", "boolean", "null"] },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "properties": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/fieldSchema" }
+        },
+        "required": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "items": { "$ref": "#/$defs/fieldSchema" },
+        "enum": { "type": "array" },
+        "default": true,
+        "examples": { "type": "array" },
+        "maxLength": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

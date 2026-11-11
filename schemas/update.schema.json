@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spec.ntxprotocol.com/schemas/0.1/update.schema.json",
+  "title": "update (source or publisher)",
+  "type": "object",
+  "required": ["op", "channel", "seq", "type", "fields"],
+  "properties": {
+    "op": { "const": "update" },
+    "channel": { "$ref": "defs.schema.json#/$defs/channel" },
+    "seq": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+    "type": { "$ref": "defs.schema.json#/$defs/typeName" },
+    "fields": { "type": "object" }
+  }
+}

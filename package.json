@@ -1,0 +1,13 @@
+{
+  "name": "ntx-spec",
+  "private": true,
+  "description": "Checks for the NTX specification's JSON Schemas and examples",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "test": "node scripts/validate.mjs"
+  },
+  "devDependencies": {
+    "ajv": "8.20.0"
+  }
+}

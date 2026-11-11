@@ -1,0 +1,10 @@
+name: Discussion
+description: A question or an idea about NTX that is not yet a concrete proposal.
+labels: [discussion]
+body:
+  - type: textarea
+    id: topic
+    attributes:
+      label: What would you like to discuss?
+    validations:
+      required: true

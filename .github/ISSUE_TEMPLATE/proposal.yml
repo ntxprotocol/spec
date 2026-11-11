@@ -1,0 +1,31 @@
+name: Proposal
+description: Propose a new feature, message, behaviour or known type for NTX.
+title: "Proposal: "
+labels: [proposal]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What can't you do today? Which apps or users need this?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: What should change in the spec? Include example JSON messages if you can.
+    validations:
+      required: true
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility
+      description: How does this affect existing sources and receivers?
+  - type: checkboxes
+    id: neutral
+    attributes:
+      label: Neutrality
+      options:
+        - label: This is useful to more than one product (product-specific needs belong in a custom reverse-DNS type).
+          required: true

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spec.ntxprotocol.com/schemas/0.1/subscribe.schema.json",
+  "title": "subscribe (receiver to source)",
+  "type": "object",
+  "required": ["op", "ntx", "receiver"],
+  "properties": {
+    "op": { "const": "subscribe" },
+    "ntx": { "$ref": "defs.schema.json#/$defs/version" },
+    "receiver": { "$ref": "defs.schema.json#/$defs/endpoint" },
+    "channels": { "$ref": "defs.schema.json#/$defs/channels" },
+    "pairing": { "$ref": "#/$defs/pairingProof" }
+  },
+  "$defs": {
+    "pairingProof": {
+      "type": "object",
+      "required": ["proof"],
+      "properties": { "proof": { "type": "string", "pattern": "^[A-Za-z0-9+/]{43}=$" } }
+    }
+  }
+}

@@ -1,0 +1,1 @@
+{"op":"announce","types":[{"ntxType":"com.example.x","schema":{"type":"object","properties":{"a":{"type":"string","pattern":"^a"}}}}]}

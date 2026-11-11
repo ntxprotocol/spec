@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spec.ntxprotocol.com/schemas/0.1/announce.schema.json",
+  "title": "announce (source or publisher)",
+  "type": "object",
+  "required": ["op", "types"],
+  "properties": {
+    "op": { "const": "announce" },
+    "types": { "type": "array", "items": { "$ref": "type-descriptor.schema.json" } }
+  }
+}

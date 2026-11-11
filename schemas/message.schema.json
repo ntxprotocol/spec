@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spec.ntxprotocol.com/schemas/0.1/message.schema.json",
+  "title": "Any NTX 0.1 message",
+  "description": "Selects the schema by the op member. Messages with an unknown op are valid here because receivers must ignore them (clause 7.2).",
+  "type": "object",
+  "required": ["op"],
+  "properties": { "op": { "type": "string" } },
+  "allOf": [
+    { "if": { "type": "object", "required": ["op"], "properties": { "op": { "const": "hello" } } }, "then": { "$ref": "hello.schema.json" } },
+    { "if": { "type": "object", "required": ["op"], "properties": { "op": { "const": "subscribe" } } }, "then": { "$ref": "subscribe.schema.json" } },
+    { "if": { "type": "object", "required": ["op"], "properties": { "op": { "const": "publish" } } }, "then": { "$ref": "publish.schema.json" } },
+    { "if": { "type": "object", "required": ["op"], "properties": { "op": { "const": "announce" } } }, "then": { "$ref": "announce.schema.json" } },
+    { "if": { "type": "object", "required": ["op"], "properties": { "op": { "const": "update" } } }, "then": { "$ref": "update.schema.json" } },
+    { "if": { "type": "object", "required": ["op"], "properties": { "op": { "const": "tally" } } }, "then": { "$ref": "tally.schema.json" } },
+    { "if": { "type": "object", "required": ["op"], "properties": { "op": { "const": "ping" } } }, "then": { "$ref": "ping.schema.json" } },
+    { "if": { "type": "object", "required": ["op"], "properties": { "op": { "const": "pong" } } }, "then": { "$ref": "pong.schema.json" } },
+    { "if": { "type": "object", "required": ["op"], "properties": { "op": { "const": "error" } } }, "then": { "$ref": "error.schema.json" } }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spec.ntxprotocol.com/schemas/0.1/hello.schema.json",
+  "title": "hello (source or relay to receiver or publisher)",
+  "type": "object",
+  "required": ["op", "ntx", "source", "channels", "session"],
+  "properties": {
+    "op": { "const": "hello" },
+    "ntx": { "$ref": "defs.schema.json#/$defs/version" },
+    "source": { "$ref": "defs.schema.json#/$defs/endpoint" },
+    "channels": {
+      "allOf": [{ "$ref": "defs.schema.json#/$defs/channels" }, { "type": "array", "contains": { "const": "program" } }]
+    },
+    "session": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "pairing": {
+      "type": "object",
+      "required": ["nonce"],
+      "properties": { "nonce": { "type": "string", "minLength": 16, "maxLength": 256 } }
+    }
+  }
+}

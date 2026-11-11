@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spec.ntxprotocol.com/schemas/0.1/defs.schema.json",
+  "title": "NTX shared definitions",
+  "$defs": {
+    "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+$" },
+    "endpoint": {
+      "type": "object",
+      "required": ["id", "name"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "name": { "type": "string", "minLength": 1, "maxLength": 256 }
+      }
+    },
+    "channel": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "channels": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/channel" },
+      "uniqueItems": true
+    },
+    "typeName": { "type": "string", "pattern": "^[a-z0-9]+(\\.[a-z0-9-]+)+$", "maxLength": 256 }
+  }
+}

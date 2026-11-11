@@ -1,0 +1,15 @@
+name: Spec change
+description: A specific, agreed change or a fix to the spec text, schemas or examples.
+labels: [spec-change]
+body:
+  - type: input
+    id: section
+    attributes:
+      label: Section
+      description: Which part of the spec does this touch?
+  - type: textarea
+    id: change
+    attributes:
+      label: Change
+    validations:
+      required: true

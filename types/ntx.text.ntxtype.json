@@ -1,0 +1,16 @@
+{
+  "ntxType": "ntx.text",
+  "title": "Text",
+  "description": "A single piece of plain text. The built-in NTX type that every receiver supports.",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "text": {
+        "type": "string",
+        "title": "Text",
+        "description": "Plain text. Line breaks are \\n.",
+        "examples": ["Amazing grace, how sweet the sound"]
+      }
+    }
+  }
+}
