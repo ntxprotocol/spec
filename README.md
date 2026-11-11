@@ -2,8 +2,8 @@
 <!-- markdownlint-disable MD033 -->
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/ntx-wordmark-reverse.svg">
-    <img src="assets/ntx-wordmark.svg" alt="NTX" height="56">
+    <source media="(prefers-color-scheme: dark)" srcset="assets/ntx-lockup-reverse.svg">
+    <img src="assets/ntx-lockup.svg" alt="NTX — Network Text Exchange" height="64">
   </picture>
 </p>
 <!-- markdownlint-enable MD033 -->
@@ -64,5 +64,5 @@ and examples are CC0. See [LICENSE.md](LICENSE.md).
 
 Copyright © 2026 CamelCase Technologies Ltd and the NTX contributors.
 
-The NTX name and wordmark (`assets/`) are trademarks and are not covered by these licences; see the
+The NTX name and logo (`assets/`) are trademarks and are not covered by these licences; see the
 [NTX trademark policy](https://github.com/ntxprotocol/.github/blob/main/TRADEMARKS.md).
