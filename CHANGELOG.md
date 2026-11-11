@@ -7,10 +7,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
-- Clause 14: a publisher sends its full state after `publish`; a relay refuses an origin instead
-  of sending `hello`, may renumber `seq`, stops serving a source when its publisher leaves, and
-  does not check connections without an `Origin` header; what `channels` means in a relay's
-  `hello` (found while building the Rust relay).
+- Clause 14.5 and 20.2 (**new rule**): a publisher connection without an `Origin` header is
+  accepted only from a loopback address unless the user allowed that address; the origin `null`
+  is always refused; the publishing endpoint should listen on loopback by default.
+- Clauses 7.3, 8.1 and 14 (clarified, found while building the Rust relay): a relay refuses with
+  `error` / `not_allowed` and close code 4003 instead of `hello`, and a publisher must accept that;
+  a publisher must send its full state after a valid `publish`; version and pairing failures close
+  as in 8.4; the relay may renumber `seq`, must stop serving (close receivers, withdraw the
+  advertisement) when its publisher leaves, and should keep the same address; the newest connection
+  for a `source.id` wins; withdrawing an origin sends `not_allowed` and closes with 4003;
+  `channels` in a relay's `hello` does not limit `publish`.
 - Clause 6.2: instance names longer than 63 bytes must be shortened (found when a long host name
   made a source impossible to discover).
 - Clause 5.2: a source must confirm the `ntx` subprotocol when a receiver offers it (found while
