@@ -28,6 +28,8 @@ NTX lets one app (a lyrics app, a scripture detector, a scoreboard…) send text
 - [schemas/](schemas/) — JSON Schemas for every message
 - [types/](types/) — known message types (`ntx.text`)
 - [examples/](examples/) — valid and invalid example messages
+- Try it: the reference implementation and the `ntx` test tool are in
+  [ntxprotocol/ntx](https://github.com/ntxprotocol/ntx#try-it).
 
 ## In one minute
 
@@ -41,6 +43,11 @@ NTX lets one app (a lyrics app, a scripture detector, a scoreboard…) send text
 - Each message has a **type** and free-form JSON **fields**. Receivers wire their text boxes to field
   paths such as `text` or `verses.0.text`.
 - Receivers can tell the source "I'm on air" (tally).
+
+Words used here: a **source** sends text and a **receiver** shows it; the **channel** `program` is
+on air now and `preview` is next; **tally** is the receiver telling the source it is on air; a web
+page **publishes** through a **relay** on its own computer; **binding** wires a receiver's text box
+to a field.
 
 ## Get involved
 
