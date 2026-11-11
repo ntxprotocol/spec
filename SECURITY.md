@@ -7,7 +7,7 @@ matter even before there is much code.
 
 Please **do not open a public issue** for a security problem. Instead, use
 [GitHub private vulnerability reporting](https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing-information-about-vulnerabilities/privately-reporting-a-security-vulnerability)
-on this repository, or email **security@ntxprotocol.com**.
+on this repository, or email **<security@ntxprotocol.com>**.
 
 We aim to reply within 7 days.
 

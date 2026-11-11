@@ -1,0 +1,9 @@
+{
+  // Markdown style for the spec. Verbatim Community Specification texts are not linted.
+  "config": {
+    "default": true,
+    "MD013": { "line_length": 110, "tables": false, "code_blocks": false },
+    "MD024": { "siblings_only": true }
+  },
+  "ignores": ["node_modules/**", "community-specification/**", "CODE_OF_CONDUCT.md", "NOTICES.md"]
+}

@@ -1,3 +1,4 @@
+<!-- markdownlint-disable-file MD041 -- the PR title is the heading -->
 ## What does this change?
 
 <!-- Link the issue: "Closes #..." -->
