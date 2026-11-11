@@ -231,7 +231,7 @@ not know. This keeps old implementations working when new optional features are 
 
 | `op` | Sent by | Purpose |
 | --- | --- | --- |
-| `hello` | source, relay | First message on every connection |
+| `hello` | source, relay | First message on every connection, except as described in 14.5 |
 | `subscribe` | receiver | Answer to `hello`: who I am, what I want |
 | `publish` | publisher | Answer to a relay's `hello`: what I will publish |
 | `announce` | source, publisher | Optional list of type descriptors |
@@ -245,7 +245,8 @@ Each operation has a JSON Schema in `schemas/`.
 
 ## 8 Connection handshake
 
-8.1 As soon as the WebSocket connection is open, the source MUST send `hello`:
+8.1 As soon as the WebSocket connection is open, the source MUST send `hello` (a relay may send
+`error` instead, as described in clause 14.5):
 
 ```json
 {
@@ -424,8 +425,9 @@ connect as **publishers** to a **relay**, normally the NTX client application on
 (`ws://localhost:7686/publish`). The relay serves each publisher to the network as an ordinary
 source.
 
-14.2 The relay sends `hello` (with its own identity in `source`, and `pairing` if required). The
-publisher answers with `publish`:
+14.2 The relay sends `hello` (with its own identity in `source`, and `pairing` if required). Its
+`channels` MUST include `program` and does not limit what a publisher may publish: the relay serves
+the channels the publisher lists in `publish`. The publisher answers with `publish`:
 
 ```json
 {
@@ -436,19 +438,49 @@ publisher answers with `publish`:
 }
 ```
 
-14.3 After a valid `publish`, the publisher sends `announce` (optional) and `update` messages
-exactly as a source would. The relay MUST forward them to receivers subscribed to that published
-source, and MUST forward combined tally from those receivers to the publisher.
+A publisher MUST accept `error` instead of `hello` as the first message (clause 14.5), and then
+treat the connection as closed.
+
+14.3 After a valid `publish`, the publisher MUST first send its full current state, as a source does
+on connect (clause 9.2), because every connection starts a new session (clause 14.4). It then sends
+`announce` (optional) and `update` messages exactly as a source would. The relay MUST forward them
+to receivers subscribed to that published source, and MUST forward combined tally from those
+receivers to the publisher. If the versions are incompatible or pairing fails, the relay MUST send
+`error` and close the connection, as a source does (clause 8.4).
 
 14.4 The relay advertises the published source with the publisher's `source.name`. It SHOULD
 prefix the machine name (`MACHINE (Song Board)`). Sequence numbers keep working because the relay
 uses the publisher's connection as the session: the relay generates a new `session` value each
-time a publisher connects.
+time a publisher connects. The relay MAY renumber `seq`, as long as the updates it sends follow
+clauses 9.2 and 9.4.
 
-14.5 **Web page publishers.** A relay MUST check the HTTP `Origin` header of publisher connections.
-It MUST refuse (`not_allowed`) any origin the user has not allowed. It SHOULD ask the user the first
-time an origin connects ("example.com wants to send text — Allow?"), remember the answer, and let
-the user withdraw it later. The relay's publishing feature MUST be off until the user turns it on.
+When the publisher's connection ends, the relay MUST stop serving the published source: it closes
+the connections of that source's receivers and withdraws its discovery advertisement (clause 6).
+It SHOULD serve the source at the same address (port and path) when the publisher connects again,
+so that receivers which connected by address find it again. If a publisher publishes a `source.id`
+that the relay is already serving for another connection, the relay SHOULD serve the newer
+connection and close the older one with `not_allowed`. A relay MAY limit how many publishers it
+serves, and refuses the others with `not_allowed`.
+
+14.5 **Who may publish.** A relay MUST check the HTTP `Origin` header of every publisher
+connection, and refuses a connection by sending `error` with code `not_allowed` instead of `hello`
+and closing it with close code 4003 (clause 12).
+
+- **Web pages** send an `Origin` header. The relay MUST refuse any origin the user has not allowed.
+  It MUST always refuse the origin `null` (sent by sandboxed and local pages, which cannot be told
+  apart). It SHOULD ask the user the first time an origin is refused ("example.com wants to send
+  text — Allow?") and remember the answer. Once the user allows the origin, the page's next
+  connection succeeds. The user SHOULD be able to withdraw permission later; the relay MUST then
+  send `error` with `not_allowed` on that origin's open publisher connections and close them with
+  close code 4003.
+- **Programs** send no `Origin` header. The relay MUST accept such a connection only from a
+  loopback address (the same computer), and MUST otherwise refuse it unless the user has allowed
+  publishers from that address.
+
+The publishing endpoint SHOULD listen only on loopback addresses unless the user chooses otherwise.
+A relay that listens on other addresses SHOULD require pairing (clause 13), because any computer
+on the network can send any `Origin` header.
+The relay's publishing feature MUST be off until the user turns it on.
 
 ## 15 Message types and type descriptors
 
@@ -584,8 +616,10 @@ connect when MAJOR and MINOR are both equal.
 20.1 Without `wss://`, anyone on the same network can read NTX text. Do not send secrets over NTX.
 
 20.2 Without pairing, anyone on the same network can connect to a source and read it. Anyone who
-can reach a relay's publishing endpoint could publish text. This is why relays check origins
-(clause 14.5) and publishing is off by default.
+can reach a relay's publishing endpoint could publish text. This is why publishing is off by
+default, the publishing endpoint listens on loopback by default, web pages need the user's
+permission for their origin, and programs on other computers need the user's permission for their
+address (clause 14.5). Pairing (clause 13) adds a further check.
 
 20.3 A captured pairing nonce and proof can be used to guess a 6-digit code offline. Pairing is
 protection against accidents and casual misuse, not against a skilled attacker on the network.
