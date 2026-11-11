@@ -424,8 +424,9 @@ connect as **publishers** to a **relay**, normally the NTX client application on
 (`ws://localhost:7686/publish`). The relay serves each publisher to the network as an ordinary
 source.
 
-14.2 The relay sends `hello` (with its own identity in `source`, and `pairing` if required). The
-publisher answers with `publish`:
+14.2 The relay sends `hello` (with its own identity in `source`, and `pairing` if required). Its
+`channels` lists the channels the relay can serve; a relay SHOULD serve any channel a publisher
+lists. The publisher answers with `publish`:
 
 ```json
 {
@@ -436,19 +437,27 @@ publisher answers with `publish`:
 }
 ```
 
-14.3 After a valid `publish`, the publisher sends `announce` (optional) and `update` messages
-exactly as a source would. The relay MUST forward them to receivers subscribed to that published
-source, and MUST forward combined tally from those receivers to the publisher.
+14.3 After `publish`, the publisher sends `announce` (optional) and `update` messages exactly as a
+source would. It first sends its full current state, as a source does on connect (clause 9.2),
+because every connection starts a new session (clause 14.4). The relay MUST forward the messages to
+receivers subscribed to that published source, and MUST forward combined tally from those receivers
+to the publisher.
 
 14.4 The relay advertises the published source with the publisher's `source.name`. It SHOULD
 prefix the machine name (`MACHINE (Song Board)`). Sequence numbers keep working because the relay
 uses the publisher's connection as the session: the relay generates a new `session` value each
-time a publisher connects.
+time a publisher connects. The relay MAY renumber `seq`, as long as the updates it sends follow
+clause 9.4. When the publisher's connection ends, the relay stops serving the published source.
+It SHOULD serve it on the same port when the publisher connects again, so that receivers which
+connected by address find it again.
 
 14.5 **Web page publishers.** A relay MUST check the HTTP `Origin` header of publisher connections.
-It MUST refuse (`not_allowed`) any origin the user has not allowed. It SHOULD ask the user the first
-time an origin connects ("example.com wants to send text — Allow?"), remember the answer, and let
-the user withdraw it later. The relay's publishing feature MUST be off until the user turns it on.
+It MUST refuse (`not_allowed`) any origin the user has not allowed: instead of `hello`, it sends
+`error` with code `not_allowed` and closes the connection (clause 12). It SHOULD ask the user the
+first time an origin connects ("example.com wants to send text — Allow?"), remember the answer, and
+let the user withdraw it later; withdrawing closes that origin's publisher connections. A
+connection without an `Origin` header comes from a program, not a web page, and is not subject to
+this check. The relay's publishing feature MUST be off until the user turns it on.
 
 ## 15 Message types and type descriptors
 
