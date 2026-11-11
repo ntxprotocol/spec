@@ -189,7 +189,9 @@ always carries the real port.
 > MUST NOT be used.
 
 6.2 The service instance name SHOULD be the source's display name (clause 8.2), for example
-`CHURCH-PC (Cueword)`.
+`CHURCH-PC (Cueword)`. A DNS label holds at most 63 bytes of UTF-8 (RFC 6763, section 4.1.1), so
+a longer name MUST be shortened to 63 bytes without splitting a character. The full name is
+still sent in `hello`.
 
 6.3 The TXT record MUST contain these keys:
 

@@ -7,6 +7,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Clause 6.2: instance names longer than 63 bytes must be shortened (found when a long host name
+  made a source impossible to discover).
 - Clause 5.2: a source must confirm the `ntx` subprotocol when a receiver offers it (found while
   testing the Rust core).
 - Clause 9.2: state-on-connect updates carry the `seq` of the item's last change (found while
