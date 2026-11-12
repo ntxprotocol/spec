@@ -292,7 +292,8 @@ schemas set.
 - `pairing` (REQUIRED only if the source asked for it): see clause 13.
 
 The first `update` (9.2) confirms the subscription; a receiver SHOULD NOT report itself connected
-before it.
+before it. A source MUST ignore any further `subscribe` on the same connection; to change its
+channels, a receiver connects again.
 
 A receiver that has no pairing code MAY close the connection with close code 4003 instead of
 sending `subscribe`.
@@ -304,6 +305,15 @@ close the connection (clause 12).
 
 8.6 If a receiver does not send `subscribe` within 10 seconds, the source MAY close the connection
 with close code 4008 (clause 12.5).
+
+8.7 **Web pages.** A source SHOULD check the HTTP `Origin` header of each connection, which web
+browsers send. It SHOULD accept connections without `Origin` (programs), and with an `Origin`
+whose host is a loopback address, `localhost`, a private address (RFC 1918, RFC 4193), a
+link-local address, or a name ending in `.local`. It SHOULD also accept the origin `null` (local
+files, such as an OBS browser source). It SHOULD refuse other origins unless the user has allowed
+them: it sends `error` with `not_allowed` instead of `hello` and closes the connection with close
+code 4003 (clause 12). A source that requires pairing (clause 13) MAY accept every origin, because
+pairing already checks the receiver.
 
 ## 9 State delivery
 
@@ -323,17 +333,18 @@ with close code 4008 (clause 12.5).
 the source MUST send one `update` for each subscribed channel that it has, carrying that channel's
 current item, with the `seq` of that item's last change. A channel that has not been set since
 the session began (clause 9.4) is sent as `"type": "ntx.text"`, `"fields": {}` and `"seq": 0`.
-State updates are the only case where a source repeats a `seq` it has already used; a receiver
-that already applied that `seq` correctly ignores the repeat.
+State updates are the only updates whose `seq` is not larger than every `seq` sent before: they
+carry the `seq` of the item's last change, or 0. A receiver that already applied that `seq`
+correctly ignores the repeat.
 
 9.3 **Changes.** Whenever the item of a channel changes, the source MUST send an `update` for that
 channel to every receiver subscribed to it. Each `update` replaces the previous item completely.
 
 9.4 **Sequence numbers.** `seq` is a non-negative integer, no larger than 2^53 − 1. Within one
-`session`, a source MUST give every `update` a larger `seq` than any `update` it sent before, on any
-channel. A receiver MUST ignore an `update` whose `seq` is less than or equal to the last `seq` it
-applied for that channel in the same session. When the `session` value changes (the source
-restarted), the receiver MUST forget previous `seq` values.
+`session`, apart from the state updates of clause 9.2, a source MUST give every `update` a larger
+`seq` than any `update` it sent before, on any channel. A receiver MUST ignore an `update` whose
+`seq` is less than or equal to the last `seq` it applied for that channel in the same session. When
+the `session` value changes (the source restarted), the receiver MUST forget previous `seq` values.
 
 9.5 **Clearing.** To clear a channel, a source sends an `update` whose `fields` is an empty object.
 Receivers MUST then show every element bound to that channel as empty, including the fixed text
@@ -405,11 +416,12 @@ SHOULD NOT reconnect until the user changes its settings or asks it to try again
 | `pairing_failed` | Pairing proof wrong | Yes | 4003 |
 | `too_large` | Message exceeds a limit (clause 18) | Yes | 4009 |
 | `bad_message` | Not valid JSON, or a required member is missing or wrong | MAY | 4000 |
-| `not_allowed` | A relay refused a publisher (clause 14) | Yes | 4003 |
+| `not_allowed` | A relay refused a publisher (clause 14), or a source refused a web page (8.7) | Yes | 4003 |
 
 12.3 `message` is OPTIONAL human-readable text for logs. Implementations MUST NOT depend on it.
 
-12.4 An endpoint that receives an unknown `code` MUST treat it as `bad_message`.
+12.4 An endpoint that receives an unknown `code` MUST handle the error as if its code were
+`bad_message`. It MAY keep the original code for logs. It does not reply.
 
 12.5 Some closes have no `error` before them:
 
@@ -441,10 +453,13 @@ digits. The nonce is encoded as UTF-8. The proof is standard Base64 (RFC 4648, s
 padding: 44 characters.
 
 13.4 The source MUST compare the proof in constant time. If `pairing` or its `proof` is missing it
-MUST reply `pairing_required`; if the proof is wrong, `pairing_failed`. A proof that is not
-44 characters of padded Base64 is wrong: `pairing_failed`, not `bad_message`. A source that does
-not require pairing ignores `pairing`. A source SHOULD slow down repeated failures
-from the same address (for example by waiting 1 second before replying).
+MUST reply `pairing_required`; if the proof is wrong, `pairing_failed`. A `proof` string that is
+not 44 characters of padded Base64 is wrong: `pairing_failed`, not `bad_message`. A `pairing`
+member that is not an object, or a `proof` that is not a string, makes the message invalid
+(clause 7.3): the source replies `bad_message`, whether or not it requires pairing. A source that
+does not require pairing otherwise ignores `pairing`. A source SHOULD slow down repeated failures
+from the same address (for example by waiting 1 second before replying). Slowing down MUST NOT
+stop a correct proof from pairing.
 
 13.5 Receivers SHOULD remember a working pairing code per `source.id`.
 
@@ -471,9 +486,10 @@ the channels the publisher lists in `publish`. The publisher answers with `publi
 A publisher MUST accept `error` instead of `hello` as the first message (clause 14.5), and then
 treat the connection as closed.
 
-14.3 After a valid `publish`, the publisher MUST first send its full current state, as a source does
-on connect (clause 9.2), because every connection starts a new session (clause 14.4). It then sends
-`announce` (optional) and `update` messages exactly as a source would. The relay MUST forward them
+14.3 After a valid `publish`, the publisher behaves as a source does after `subscribe`: it MAY send
+`announce` (clause 15.5), then MUST send its full current state (clause 9.2), because every
+connection starts a new session (clause 14.4). It then sends `announce` and `update` messages
+exactly as a source would. The relay MUST forward them
 to receivers subscribed to that published source, and MUST forward combined tally from those
 receivers to the publisher. If the versions are incompatible or pairing fails, the relay MUST send
 `error` and close the connection, as a source does (clause 8.4).
@@ -482,14 +498,17 @@ receivers to the publisher. If the versions are incompatible or pairing fails, t
 prefix the machine name (`MACHINE (Song Board)`). Sequence numbers keep working because the relay
 uses the publisher's connection as the session: the relay generates a new `session` value each
 time a publisher connects. The relay MAY renumber `seq`, as long as the updates it sends follow
-clauses 9.2 and 9.4.
+clauses 9.2 and 9.4. For a published source, a channel is set once the publisher has sent an
+`update` for it in this session, even an empty one.
 
 When the publisher's connection ends, the relay MUST stop serving the published source: it closes
 the connections of that source's receivers and withdraws its discovery advertisement (clause 6).
 It SHOULD serve the source at the same address (port and path) when the publisher connects again,
 so that receivers which connected by address find it again. If a publisher publishes a `source.id`
-that the relay is already serving for another connection, the relay SHOULD serve the newer
-connection and close the older one with `not_allowed`. A relay MAY limit how many publishers it
+that the relay is already serving for another connection from the same origin (or, for programs,
+from the same address), the relay SHOULD serve the newer connection and close the older one with
+`not_allowed`. If the other connection has a different origin or address, the relay MUST refuse
+the newer connection with `not_allowed` instead. A relay MAY limit how many publishers it
 serves, and refuses the others with `not_allowed`.
 
 14.5 **Who may publish.** A relay MUST check the HTTP `Origin` header of every publisher
@@ -579,14 +598,17 @@ This clause describes how receivers turn fields into text. It is normative for r
 16.1 A receiver lets the user wire a text element (text box, title, slide item…) to a **source**,
 a **channel** (default `program`) and either a **field path** or a **pattern**.
 
-16.2 **Field paths** are dot-separated: each part is an object member name, or a decimal array
-index. Examples: `text`, `reference`, `verses.0.text`. Member names containing `.` cannot be
-addressed; type authors SHOULD use names made of letters, digits and `_`.
+16.2 **Field paths** are dot-separated: each part is an object member name, or a decimal array index
+without leading zeros (`0`, `1`, `12`; not `01`). Examples: `text`, `reference`, `verses.0.text`.
+Member names containing `.` cannot be addressed; type authors SHOULD use names made of letters,
+digits and `_`.
 
 16.3 **Patterns** mix fixed text and field paths in braces:
 `{reference} · {version}`. `{{` and `}}` produce literal `{` and `}`. Spaces (U+0020) and tabs
 (U+0009) at the start and end of a field path inside braces are ignored, so `{ reference }` is
-`{reference}`. Nothing else is trimmed.
+`{reference}`. Nothing else is trimmed. A pattern is invalid if a `{` has no matching `}`, a `}` is
+neither closing a field path nor part of `}}`, or a field path is empty. Receivers MUST refuse an
+invalid pattern when the user enters it, rather than render it.
 
 16.4 **Converting values to text.**
 
@@ -666,7 +688,8 @@ intermediate updates and show only the newest one.
 ## 19 Versioning
 
 19.1 The protocol version has the form `MAJOR.MINOR`, sent in `ntx` of `hello`, `subscribe` and
-`publish`, and in the `ntx` TXT key.
+`publish`, and in the `ntx` TXT key. Neither number has leading zeros, so endpoints compare
+versions as strings.
 
 19.2 From version 1.0: endpoints with the same MAJOR version MUST work together. A new MINOR
 version only adds optional features, which older endpoints ignore (clause 7.2).
@@ -684,7 +707,9 @@ connect when MAJOR and MINOR are both equal.
 can reach a relay's publishing endpoint could publish text. This is why publishing is off by
 default, the publishing endpoint listens on loopback by default, web pages need the user's
 permission for their origin, and programs on other computers need the user's permission for their
-address (clause 14.5). Pairing (clause 13) adds a further check.
+address (clause 14.5). Web pages on the internet, open in a browser on the same network, could
+otherwise read sources and set tally; clause 8.7 limits this. Pairing (clause 13) adds a further
+check.
 
 20.3 A captured pairing nonce and proof can be used to guess a 6-digit code offline. Pairing is
 protection against accidents and casual misuse, not against a skilled attacker on the network.
