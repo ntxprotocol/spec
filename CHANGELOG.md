@@ -5,6 +5,26 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## Unreleased
 
+### Changed (review proposals #4–#9)
+
+Decided after an independent review of the spec and the reference implementation:
+
+- Clause 13.4 (#4): a `pairing` that is not an object, or a `proof` that is not a string, is
+  `bad_message`, as the schema says; only a wrong proof string is `pairing_failed`. Slowing down
+  repeated failures must not stop a correct proof from pairing.
+- Clauses 9.2, 9.4 (#5): state updates are exempt from "every `seq` larger than before".
+- Clause 14.3 (#6): a publisher sends `announce` (if any) before its state, as a source does.
+- Clarifications (#7): versions have no leading zeros and compare as strings (19.1, schema);
+  a second `subscribe` is ignored (8.3); invalid patterns are refused when entered (16.3); array
+  indexes have no leading zeros (16.2); an unknown error code is handled as `bad_message` without
+  a reply (12.4); a published source's channel is set once the publisher sent an update for it
+  (14.4).
+- New clause 8.7 (#8): sources SHOULD refuse web pages from internet origins unless the user
+  allowed them, and accept programs, local pages and local files (`null`). Clause 20.2 explains
+  why.
+- Clause 14.4 (#9): a relay replaces a published source only for a connection from the same origin
+  or address; it refuses the same `source.id` from another one.
+
 ### Changed
 
 Found by an interoperability review of the Rust core, the TypeScript SDK, the Python bindings and
