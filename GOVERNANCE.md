@@ -8,7 +8,7 @@ decisions by consensus, written reasons, and an open appeal process.
 
 | Role | Who |
 | --- | --- |
-| Maintainer | Temitayo ([CamelCase Technologies Ltd](https://ntxprotocol.com)) |
+| Maintainer | Temitayo ([CamelCase Technologies Ltd](https://github.com/ntxprotocol)) |
 | Editor | Temitayo |
 | Participants | Everyone who has contributed under the Community Specification License |
 
