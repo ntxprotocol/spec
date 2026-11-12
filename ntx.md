@@ -4,7 +4,7 @@
 **Status:** Pre-Draft (open for discussion; anything may change)
 **Editor:** Temitayo, CamelCase Technologies Ltd
 
-© 2026 CamelCase Technologies Ltd and the NTX contributors.
+Copyright © 2026 CamelCase Technologies Ltd and the NTX contributors.
 
 This specification is subject to the Community Specification License 1.0, available at
 <https://github.com/CommunitySpecification/1.0>.

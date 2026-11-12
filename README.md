@@ -59,6 +59,8 @@ to a field.
 
 ## Checks
 
+They need [Node.js](https://nodejs.org) 22 or newer:
+
 ```bash
 npm ci && npm test
 ```
